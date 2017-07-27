@@ -1,0 +1,6 @@
+*.env
+*.conf
+/node_modules
+/backtest
+/noodle
+/robinhood
