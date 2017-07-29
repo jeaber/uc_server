@@ -40,6 +40,7 @@ var clientRequests = require('./mongoose/client_requests');
 // var loop = require('./loop');
 io.on('connection', function (socket) {
     try {
+        var clientIp = socket.request.connection.remoteAddress;
         var authenticated = false;
         var credentials = {
             email: '',
@@ -49,13 +50,13 @@ io.on('connection', function (socket) {
         var accounts;
         var positions;
         // {'email','password'}
-        socket.on('auth', function (data) {
+        socket.on('auth', function (data, socket, clientIp) {
             credentials = data;
             authenticated = clientRequests.auth(credentials, socket);
             clientRequests.accountData(credentials, socket);
         });
 
-        socket.on('accountForm', function (account) { clientRequests.accountForm(account); });
+        socket.on('accountForm', function (account, clientIp) { clientRequests.accountForm(account); });
         socket.on('contactForm', function (data, account) { clientRequests.contactForm(data, account); });
         socket.on('fundingForm', function (data, account) { clientRequests.fundingForm(data, account); });
 

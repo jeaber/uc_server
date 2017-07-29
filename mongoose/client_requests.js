@@ -1,6 +1,6 @@
 var m = require('./index.js');
 var mg = require('./../mailgun');
-var auth = function (data, socket) {
+var auth = function (data, socket, ip) {
 	m.Account.findOne(credentials, function (err, data) {
 		console.log(data);
 		// check ip
@@ -42,7 +42,7 @@ var verifyEmail = function (credentials, data, socket) {
 var newLogin = function (credentials, data, socket) {
 	m.Account.findOne({ credentials });
 }
-var accountForm = function (data, socket) {
+var accountForm = function (data, socket, clientIp) {
 	//create pin
 	//create account number
 	//save to mongodb
@@ -50,25 +50,40 @@ var accountForm = function (data, socket) {
 	var pin = Math.floor(Math.random() * (998888 - 102222) + 102222);
 	pin = pin.toString();
 	console.log(data);
-	m.Account.findByIdAndUpdate(
+	data.email_verified = false;
+	data.emailPin = pin;
+	data.active = false;
+	data.ip = clientIp;
+	m.Account.update(
 		{ email: data.email },
-		{
-			email: data.email,
-			password: data.password,
-			firstName: data.firstName,
-			lastName: data.lastName,
-			emailPin: pin,
-			email_verified: false,
-			active: false,
-			// ip_addresses: [Number],
-		},
-		{ upsert: true, new: true, runValidators: true }, function (err, result) {
+		{ $setOnInsert: data },
+		{ upsert: true },
+		function (err, result) {
 			if (err) console.log("ERR", err);
 			if (result) {
 				console.log(result);
 				mg.verifyEmail(data.email, pin);
 			}
 		});
+	/*	m.Account.findByIdAndUpdate(
+			{ email: data.email },
+			{
+				email: data.email,
+				password: data.password,
+				firstName: data.firstName,
+				lastName: data.lastName,
+				emailPin: pin,
+				email_verified: false,
+				active: false,
+				// ip_addresses: [Number],
+			},
+			{ upsert: true, new: true, runValidators: true }, function (err, result) {
+				if (err) console.log("ERR", err);
+				if (result) {
+					console.log(result);
+					mg.verifyEmail(data.email, pin);
+				}
+			});*/
 }
 var contactForm = function (credentials, data, socket) {
 
