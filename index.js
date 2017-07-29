@@ -1,3 +1,4 @@
+require('dotenv').config();
 var express = require('express'),
     app = express(),
     path = require('path'),
@@ -13,10 +14,10 @@ var bodyParser = require('body-parser');
 //var market = require('./market');
 //var dwolla = require('./dwolla');
 //var noodle = require('./noodle');
-require('dotenv').config();
 
 var R = require('ramda');
 var m = require('./mongoose');
+var mg = require('./mailgun');
 // CONFIG SERVER
 var config = {
     build_dir: './dist',
@@ -54,9 +55,9 @@ io.on('connection', function (socket) {
             clientRequests.accountData(credentials, socket);
         });
 
-        socket.on('accountform', function (account) { clientRequests.accountForm(account); });
-        socket.on('contactform', function (data, account) { clientRequests.contactForm(data, account); });
-        socket.on('fundingform', function (data, account) { clientRequests.fundingForm(data, account); });
+        socket.on('accountForm', function (account) { clientRequests.accountForm(account); });
+        socket.on('contactForm', function (data, account) { clientRequests.contactForm(data, account); });
+        socket.on('fundingForm', function (data, account) { clientRequests.fundingForm(data, account); });
 
         socket.on('verifyBank', function (data) { clientRequests.verifyBank(data); }); // {'00.12, '00.22'}
         socket.on('verifyEmail', function (data) { clientRequests.verifyEmail(data); });

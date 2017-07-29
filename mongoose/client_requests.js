@@ -1,54 +1,90 @@
 var m = require('./index.js');
-var robinhood = require('./../robinhood/robinhood');
-var dividendHistory = require('./../noodle/dividend-history');
-
-var auth = function(data, socket) {
-	return true;
-}
-var accountData = function(credentials, socket) {
-	m.Account.find(credentials, function (err, data) {
-		if (!data[0]) {
-			robinhood.accounts(credentials, socket);
-			robinhood.positions(credentials, socket);
-			robinhood.profile(credentials, socket);
-			robinhood.orders(credentials, socket);
-		}
-		else {
-			socket.emit('accounts', data[0]['account']);
-			socket.emit('positions', data[0]['positions'].data);
-			socket.emit('profile', data[0]['profile']);
-			socket.emit('orders', data[0]['orders'].data);
-			socket.emit('url', data[0]['portfolio']);
-			if (data[0]['buylist']) {
-				socket.emit('buylist', data[0]['buylist']);
-			}
+var mg = require('./../mailgun');
+var auth = function (data, socket) {
+	m.Account.findOne(credentials, function (err, data) {
+		console.log(data);
+		// check ip
+		// send email
+		if (socket) {
+			socket.emit('auth', true);
+			socket.emit('account', data[0]['account']);
+			socket.emit('funding', data[0]['funding']);
 		}
 	});
+	return true;
 }
-var verifyBank = function(data) {
+var accountData = function (credentials, socket) {
+	/*	m.Account.find(credentials, function (err, data) {
+			if (!data[0]) {
+				robinhood.accounts(credentials, socket);
+				robinhood.positions(credentials, socket);
+				robinhood.profile(credentials, socket);
+				robinhood.orders(credentials, socket);
+			}
+			else {
+				socket.emit('accounts', data[0]['account']);
+				socket.emit('positions', data[0]['positions'].data);
+				socket.emit('profile', data[0]['profile']);
+				socket.emit('orders', data[0]['orders'].data);
+				socket.emit('url', data[0]['portfolio']);
+				if (data[0]['buylist']) {
+					socket.emit('buylist', data[0]['buylist']);
+				}
+			}
+		});*/
+}
+var verifyBank = function (data, socket) {
 
 }
-var verifyEmail = function(data) {
+var verifyEmail = function (credentials, data, socket) {
+	m.Account.findOne({ credentials });
+}
+var newLogin = function (credentials, data, socket) {
+	m.Account.findOne({ credentials });
+}
+var accountForm = function (data, socket) {
+	//create pin
+	//create account number
+	//save to mongodb
+	//send email
+	var pin = Math.floor(Math.random() * (998888 - 102222) + 102222);
+	pin = pin.toString();
+	console.log(data);
+	m.Account.findByIdAndUpdate(
+		{ email: data.email },
+		{
+			email: data.email,
+			password: data.password,
+			firstName: data.firstName,
+			lastName: data.lastName,
+			emailPin: pin,
+			email_verified: false,
+			active: false,
+			// ip_addresses: [Number],
+		},
+		{ upsert: true, new: true, runValidators: true }, function (err, result) {
+			if (err) console.log("ERR", err);
+			if (result) {
+				console.log(result);
+				mg.verifyEmail(data.email, pin);
+			}
+		});
+}
+var contactForm = function (credentials, data, socket) {
 
 }
-var accountform = function(data) {
+var fundingForm = function (credentials, data, socket) {
 
 }
-var contactform = function(data) {
+var achDeposit = function (credentials, data, socket) {
 
 }
-var fundingform = function(data) {
-
-}
-var achDeposit = function(data) {
-
-}
-var achWithdrawal = function(data) {
+var achWithdrawal = function (credentials, data, socket) {
 
 }
 
 
-
+/*
 var accountData = function (credentials, socket) {
 	m.Account.find(credentials, function (err, data) {
 		if (!data[0]) {
@@ -140,15 +176,16 @@ var mostCurrent = function (date) {
 		return false;
 	}
 	return true;
-}
+}*/
 module.exports = {
 	auth: auth,
 	accountData: accountData,
 	verifyBank: verifyBank,
 	verifyEmail: verifyEmail,
-	accountform: accountform,
-	contactform: contactform,
-	fundingform: fundingform,
+	newLogin: newLogin,
+	accountForm: accountForm,
+	contactForm: contactForm,
+	fundingForm: fundingForm,
 	achDeposit: achDeposit,
 	achWithdrawal: achWithdrawal
 }
