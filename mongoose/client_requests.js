@@ -1,17 +1,27 @@
 var m = require('./index.js');
 var mg = require('./../mailgun');
-var auth = function (data, socket, ip) {
+
+var auth = function (credentials, socket, ip) {
 	m.Account.findOne(credentials, function (err, data) {
 		console.log(data);
+		// TODO
 		// check ip
 		// send email
-		if (socket) {
-			socket.emit('auth', true);
-			socket.emit('account', data[0]['account']);
-			socket.emit('funding', data[0]['funding']);
+		if (data) {
+			if (socket) {
+				socket.emit('auth', true);
+				if (data['account'])
+					socket.emit('account', data['account']);
+				// DO NOT SEND PINS TODO
+				if (data['funding'])
+					socket.emit('funding', data['funding']);
+			}
+		} else {
+			if (socket) {
+				socket.emit('auth', false);
+			}
 		}
 	});
-	return true;
 }
 var accountData = function (credentials, socket) {
 	/*	m.Account.find(credentials, function (err, data) {
@@ -49,11 +59,14 @@ var accountForm = function (data, socket, clientIp) {
 	//send email
 	var pin = Math.floor(Math.random() * (998888 - 102222) + 102222);
 	pin = pin.toString();
-	console.log(data);
+
 	data.email_verified = false;
 	data.emailPin = pin;
 	data.active = false;
 	data.ip = clientIp;
+	console.log(data);
+
+	console.log(typeof clientIp, clientIp)
 	m.Account.update(
 		{ email: data.email },
 		{ $setOnInsert: data },
@@ -63,8 +76,19 @@ var accountForm = function (data, socket, clientIp) {
 			if (result) {
 				console.log(result);
 				mg.verifyEmail(data.email, pin);
+				m.Account.update(
+					{ email: data.email },
+					{ $addToSet: { known_ips: clientIp } },
+					function (err, result) {
+						if (err) console.log("ERR", err);
+						if (result) {
+							console.log('updated ip', result);
+						}
+					});
 			}
+
 		});
+
 	/*	m.Account.findByIdAndUpdate(
 			{ email: data.email },
 			{
@@ -86,7 +110,27 @@ var accountForm = function (data, socket, clientIp) {
 			});*/
 }
 var contactForm = function (credentials, data, socket) {
+	m.Account.update(
+		credentials,
+		{ $setOnInsert: data },
+		{ upsert: true },
+		function (err, result) {
+			if (err) console.log("ERR", err);
+			if (result) {
+				console.log(result);
+				mg.verifyEmail(data.email, pin);
+				m.Account.update(
+					{ email: data.email },
+					{ $addToSet: { known_ips: clientIp } },
+					function (err, result) {
+						if (err) console.log("ERR", err);
+						if (result) {
+							console.log('updated ip', result);
+						}
+					});
+			}
 
+		});
 }
 var fundingForm = function (credentials, data, socket) {
 
