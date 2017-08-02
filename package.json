@@ -24,8 +24,12 @@
     "mongoose": "^4.10.4",
     "mongoose-encryption": "^1.5.0",
     "morgan": "^1.8.2",
+    "node-quickbooks": "^2.0.15",
+    "node-quickbooks-oauth2": "^2.0.13",
+    "passport-intuit": "^0.2.0",
     "path": "^0.12.7",
     "ramda": "^0.24.1",
-    "socket.io": "^2.0.2"
+    "socket.io": "^2.0.2",
+    "subledger": "^1.1.2"
   }
 }

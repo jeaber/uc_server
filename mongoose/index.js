@@ -49,10 +49,12 @@ var accountSchema = mongoose.Schema({
 	},
 	account: {
 		account_number: { type: String },
-		updated_at: { type: String },
-		created_at: { type: String },
-		balance: { type: Number },
-		payouts: [Number]
+		updated_at: { type: Date },
+		created_at: { type: Date },
+		balance: { type: String },
+		book: { type: String },
+		description: { type: String },
+		payouts: [{ date: { type: Date }, amount: { type: String } }]
 	}
 });
 var Account = mongoose.model('Account', accountSchema);
