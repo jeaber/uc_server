@@ -2,10 +2,21 @@ var api_key = process.env.mgkey;//'key-XXXXXXXXXXXXXXXXXXXXXXX';
 var domain = process.env.mgdomain; //'www.mydomain.com';
 var mailgun = require('mailgun-js')({ apiKey: api_key, domain: domain });
 var mailcomposer = require('mailcomposer');
+var m = require('./../mongoose/index.js');
 
 
-
-var verify = function (email, pin, ip) {
+var verify = function (email, ip) {
+  var pin = Math.floor(Math.random() * (998888 - 102222) + 102222);
+  pin = pin.toString();
+  m.Account.update(
+    { email: email },
+    { emailPin: pin },
+    function (err, result) {
+      if (err) console.log("ERR", err);
+      if (result) {
+        console.log('updated ip', result);
+      }
+    });
   var mail = mailcomposer({
     from: 'Upcrue <donotreply@upcrue.com>',
     to: email,

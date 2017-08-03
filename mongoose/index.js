@@ -17,20 +17,20 @@ var accountSchema = mongoose.Schema({
 	password: { type: String },
 	email_verified: { type: Boolean },
 	// DO NOT SEND TO CLIENT
-	pin: { type: String },
+	emailPin: { type: String },
 	active: { type: Boolean },
-	ip_addresses: [Number],
+	known_ips: [String],
 	contact: {
 		streetAddress: { type: String },
 		city: { type: String },
 		state: { type: String },
-		postalCode: { type: Number },
-		phone: { type: Number }
+		postalCode: { type: String },
+		phone: { type: String }
 	},
 	funding: {
-		accountType: { type: String, unique: true },
-		accountNumber: { type: Number },
-		routingNumber: { type: Number },
+		accountType: { type: String},
+		accountNumber: { type: String },
+		routingNumber: { type: String },
 		authorized: { type: Boolean },
 		verified: { type: Boolean },
 		// DO NOT SEND TO CLIENT
@@ -40,15 +40,15 @@ var accountSchema = mongoose.Schema({
 		},
 		scheduled_withdrawals: {
 			date: { type: Date },
-			amount: { type: Number }
+			amount: { type: String }
 		},
 		scheduled_deposits: {
 			date: { type: Date },
-			amount: { type: Number }
+			amount: { type: String }
 		},
 	},
 	account: {
-		account_number: { type: String },
+		account_number: { type: String, unique: true },
 		updated_at: { type: Date },
 		created_at: { type: Date },
 		balance: { type: String },

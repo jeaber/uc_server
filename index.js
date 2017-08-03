@@ -37,6 +37,8 @@ app.use(function (err, req, res, next) {
 });
 
 var clientRequests = require('./mongoose/client_requests');
+var mg = require('./mailgun');
+
 // var loop = require('./loop');
 io.on('connection', function (socket) {
     try {
@@ -47,7 +49,7 @@ io.on('connection', function (socket) {
             email: '',
             password: ''
         };
-        var accountSave;
+        var account;
         // {'email','password'}
         socket.on('auth', function (data) {
             credentials = data;
@@ -56,11 +58,12 @@ io.on('connection', function (socket) {
         });
 
         socket.on('accountForm', function (data) { account = data; clientRequests.accountForm(data, socket, clientIp); });
-        socket.on('contactForm', function (data, account) { clientRequests.contactForm(data, account, socket); });
-        socket.on('fundingForm', function (data, account) { clientRequests.fundingForm(data, account, socket); });
+        socket.on('contactForm', function (data) { clientRequests.contactForm(data, account, socket); });
+        socket.on('fundingForm', function (data) { clientRequests.fundingForm(data, account, socket); });
 
         socket.on('verifyBank', function (data) { clientRequests.verifyBank(data); }); // {'00.12, '00.22'}
-        socket.on('verifyEmail', function (data) { clientRequests.verifyEmail(data); });
+        socket.on('verifyEmail', function (data) { clientRequests.verifyEmail(credentials, data, socket); });
+        socket.on('resendVerifyEmail', function () { mg.verifyEmail(credentials.email); });
 
         socket.on('achDeposit', function (data) { clientRequests.achDeposit(data); });
         socket.on('achWithdrawal', function (data) { clientRequests.achWithdrawal(data); });

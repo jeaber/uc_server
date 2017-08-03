@@ -11,10 +11,10 @@ var auth = function (credentials, socket, ip) {
 			if (socket) {
 				socket.emit('auth', true);
 				if (data['account'])
-					socket.emit('account', data['account']);
+					socket.emit('accountData', data['account']);
 				// DO NOT SEND PINS TODO
 				if (data['funding'])
-					socket.emit('funding', data['funding']);
+					socket.emit('fundingData', data['funding']);
 			}
 		} else {
 			if (socket) {
@@ -44,10 +44,32 @@ var accountData = function (credentials, socket) {
 		});*/
 }
 var verifyBank = function (data, socket) {
-
+	// {one: '0.00',two: '0.12'}
 }
-var verifyEmail = function (credentials, data, socket) {
-	m.Account.findOne({ credentials });
+var verifyEmail = function (credentials, pin, socket) {
+	console.log(credentials, pin)
+	m.Account.findOne(credentials, 'emailPin', function(err, data) {
+			if (data) {
+				console.log("verify pin", data);
+				if (data.emailPin === pin) {
+					m.Account.update(
+						credentials,
+						{
+							email_verified: true,
+							emailPin: ''
+						},
+						function (err, result) {
+							if (err) console.log("ERR", err);
+							if (result) {
+								console.log('updated ip', result);
+								socket.emit('notification', { message: 'Email verified.', type: 'success' })
+							}
+						});
+				} else {
+					socket.emit('notification', { message: 'Pin incorrect. Please check it again.', type: 'error' })
+				}
+			}
+	});
 }
 var newLogin = function (credentials, data, socket) {
 	m.Account.findOne({ credentials });
@@ -57,11 +79,11 @@ var accountForm = function (data, socket, clientIp) {
 	//create account number
 	//save to mongodb
 	//send email
-	var pin = Math.floor(Math.random() * (998888 - 102222) + 102222);
-	pin = pin.toString();
+
 
 	data.email_verified = false;
-	data.emailPin = pin;
+
+	// data.emailPin = pin;
 	data.active = false;
 	data.ip = clientIp;
 	console.log(data);
@@ -75,7 +97,7 @@ var accountForm = function (data, socket, clientIp) {
 			if (err) console.log("ERR", err);
 			if (result) {
 				console.log(result);
-				mg.verifyEmail(data.email, pin);
+				mg.verifyEmail(data.email);
 				m.Account.update(
 					{ email: data.email },
 					{ $addToSet: { known_ips: clientIp } },
@@ -86,7 +108,6 @@ var accountForm = function (data, socket, clientIp) {
 						}
 					});
 			}
-
 		});
 
 	/*	m.Account.findByIdAndUpdate(
@@ -109,31 +130,41 @@ var accountForm = function (data, socket, clientIp) {
 				}
 			});*/
 }
-var contactForm = function (credentials, data, socket) {
-	m.Account.update(
-		credentials,
-		{ $setOnInsert: data },
+var contactForm = function (data, account, socket) {
+	m.Account.findOneAndUpdate(
+		{
+			firstName: account.firstName,
+			lastName: account.lastName,
+			email: account.email,
+			password: account.password
+		},
+		{ contact: data },
 		{ upsert: true },
 		function (err, result) {
 			if (err) console.log("ERR", err);
 			if (result) {
 				console.log(result);
-				mg.verifyEmail(data.email, pin);
-				m.Account.update(
-					{ email: data.email },
-					{ $addToSet: { known_ips: clientIp } },
-					function (err, result) {
-						if (err) console.log("ERR", err);
-						if (result) {
-							console.log('updated ip', result);
-						}
-					});
 			}
-
 		});
 }
-var fundingForm = function (credentials, data, socket) {
-
+var fundingForm = function (data, account, socket) {
+	data.authorized = true;
+	data.verified = false;
+	m.Account.findOneAndUpdate(
+		{
+			firstName: account.firstName,
+			lastName: account.lastName,
+			email: account.email,
+			password: account.password
+		},
+		{ funding: data },
+		{ upsert: true },
+		function (err, result) {
+			if (err) console.log("ERR", err);
+			if (result) {
+				console.log(result);
+			}
+		});
 }
 var achDeposit = function (credentials, data, socket) {
 
